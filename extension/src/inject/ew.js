@@ -30,7 +30,8 @@ function updateTime() {
 }
 
 function getGraphUrl(ticker) {
-    return "https://finviz.com/chart.ashx?t=" + ticker + "&ty=c&ta=1&p=d&s=l";
+    // return "https://finviz.com/chart.ashx?t=" + ticker + "&ty=c&ta=1&p=d&s=l";
+    return "http://tinvest.daager.ru/stockcharts/"+ticker;
 }
 
 function markTinTicker() {
@@ -81,7 +82,7 @@ if (window.location.host.replace('www.', '') == 'earningswhispers.com') {
     setInterval(function () {
         updateTime();
         markTinTicker();
-    }, 500)
+    }, 350)
 
     document.body.insertAdjacentHTML("afterbegin", "<div id='graph_block' style='display: none'><img src></div>");
     graph_block = document.querySelector("div#graph_block")

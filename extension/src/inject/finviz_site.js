@@ -21,7 +21,7 @@ if (window.location.host.replace('www.', '') == 'finviz.com') {
     markTinTicker();
     setInterval(function () {
         markTinTicker();
-    }, 500)
+    }, 350)
 
     document.body.insertAdjacentHTML("afterbegin", "<div id='graph_block' style='display: none'><img src></div>");
 } else {

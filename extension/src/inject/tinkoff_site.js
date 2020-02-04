@@ -612,11 +612,18 @@ async function exportJournalToCsv() {
 
 
 if (window.location.host.replace('www.', '') == 'tinkoff.ru') {
+    if(window.location.pathname=='/invest/web-terminal/'){
+        window.location='/invest-terminal'
+    }
+    document.querySelectorAll("a[href='/invest/web-terminal/']").forEach(function(item){
+        item.href='/invest-terminal'
+    })
     style_arr = [
         '.bad-revenue{background-color: rgba(255, 0, 0, 0.05);}',
         '.good-revenue{background-color: rgba(0, 255, 0, 0.05);}',
         '.tinvest-count_stocks {margin-bottom:25px; width:100%;border-collapse: collapse;color:#333;text-align: center;}',
-        '.tinvest-count_stocks th, .tinvest-count_stocks td {padding:5px 0;border-bottom: 1px solid #ddd;}'
+        '.tinvest-count_stocks th, .tinvest-count_stocks td {padding:5px 0;border-bottom: 1px solid #ddd;}',
+        'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}'
     ];
 
     style_arr.forEach(function (style) {
@@ -630,6 +637,7 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru') {
         await exportToCsv();
         await exportJournalToCsv();
     }, 2500);
+
 } else {
     console.log('not tinkoff')
 }
