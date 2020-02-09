@@ -33,6 +33,7 @@ __Расширение может некорректно работать с И�
 [<img width="640" alt="fv" src="https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/fv.png">](https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/fv.png)
 [<img width="640" alt="ew" src="https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/tin1.png">](https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/tin1.png)
 [<img width="640" alt="ew" src="https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/tin2.png">](https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/tin2.png)
+[<img width="640" alt="ew" src="https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/tin3.png">](https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/tin3.png)
 [<img width="640" alt="sws" src="https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/sws.png">](https://raw.githubusercontent.com/DaaGER/tinvest/master/_images/sws.png)
 
 ## Как установить?
