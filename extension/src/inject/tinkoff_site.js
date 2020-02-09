@@ -238,7 +238,7 @@ async function calc_real_revenue(payload, history_result, current_ticker) {
                     }
                 }
 
-                console.log(item.payment, (item.commission || 0))
+                // console.log(item)
                 return sum + item.payment + (item.commission || 0);
             }
             return sum;
@@ -279,7 +279,6 @@ async function calc_real_revenue(payload, history_result, current_ticker) {
 }
 
 async function real_revenue() {
-
 // current_ticker=Object.keys(data.investTrade.symbolUserInfo)[0];
     regex = /\(([A-Z\.]+)\):/m
     ticker_regexp = regex.exec(document.querySelector("meta[property='og:title']").content)
@@ -287,11 +286,11 @@ async function real_revenue() {
     //console.log(ticker_regexp);
     currency = "NA";
     real_revenue_value = 0;
+    isCurrency = false;
     if (ticker_regexp !== null) {
         current_ticker = ticker_regexp[1];
         //console.log("Обнаружен Тикер: " + current_ticker);
         info = await getInfo(current_ticker);
-
         //console.log("Info: ");
         //currency='';
         if (info.payload.hasEvents) {
@@ -300,6 +299,7 @@ async function real_revenue() {
             real_revenue_object = await calc_real_revenue(info.payload, null, current_ticker);
             real_revenue_value = real_revenue_object.revenue
             if (info.payload.positionTinkoff) {
+                isCurrency = (info.payload.positionTinkoff.securityType == 'Currency')
                 currency = info.payload.positionTinkoff.currentAmount.currency.toString();
                 if (!currency) {
                     console.log('currency not defined');
@@ -308,6 +308,7 @@ async function real_revenue() {
                 currentBalance = info.payload.positionTinkoff.currentBalance;
             }
             if (info.payload.positionTinkoffIis) {
+                isCurrency = (info.payload.positionTinkoffIis.securityType == 'Currency')
                 //real_revenue_value += await calc_real_revenue(info.payload.positionTinkoffIis);
                 currency = info.payload.positionTinkoffIis.currentAmount.currency.toString();
                 if (!currency) {
@@ -326,52 +327,64 @@ async function real_revenue() {
                 //console.log(currency);
             }
             //real_revenue_value=	real_revenue_value;
-            if (currency == 'USD') {
-                currency = '$'
-            }
-            if (currency == 'RUB') {
-                currency = 'руб'
-            }
-            //cur_count=parseFloat(info.payload.positionTinkoff.currentBalance.value).toFixed(0);
+            if (!isCurrency) {
+                if (currency == 'USD') {
+                    currency = '$'
+                }
+                if (currency == 'RUB') {
+                    currency = 'руб'
+                }
+                //cur_count=parseFloat(info.payload.positionTinkoff.currentBalance.value).toFixed(0);
 
-            html = "<div class='tinvest-block'>";
-            html += '<div><b class="real_revenue" title="Если продать всё и прямо сейчас">Реальная доходность : ' + parseFloat(real_revenue_value).toFixed(2) + ' ' + currency + '</b></div>';
+                html = "<div class='tinvest-block'>";
+                html += '<div><b class="real_revenue" title="Если продать всё и прямо сейчас">Реальная доходность : ' + parseFloat(real_revenue_value).toFixed(2) + ' ' + currency + '</b></div>';
 
 
-            //html += '<div><b class="opened_position">Открытая позиция: ' + cur_count + '</b></div>';
-            if (real_revenue_value < 0 && currentBalance > 0) {
-                need_earn = await needEarn(real_revenue_value, info.payload, current_ticker);
-                html += '<div><b class="need_earn">Выход в ноль при: ' + need_earn + '</b></div>';
-            }
-            html += "</div>"
+                //html += '<div><b class="opened_position">Открытая позиция: ' + cur_count + '</b></div>';
+                if (real_revenue_value < 0 && currentBalance > 0) {
+                    need_earn = await needEarn(real_revenue_value, info.payload, current_ticker);
+                    html += '<div><b class="need_earn">Выход в ноль при: ' + need_earn + '</b></div>';
+                }
+                html += "</div>"
 
-            tinvest_block = document.querySelector("div.tinvest-block")
-            //console.log(tinvest_block);
-            if (tinvest_block) {
-                tinvest_block.outerHTML = html
-            } else {
-                security_block = document.querySelector("h1[data-qa-file^=SecurityHeader]")
-                //console.log(security_block);
-                if (security_block) {
-                    security_block.insertAdjacentHTML('afterend', html);
+                tinvest_block = document.querySelector("div.tinvest-block")
+                //console.log(tinvest_block);
+                if (tinvest_block) {
+                    tinvest_block.outerHTML = html
+                } else {
+                    security_block = document.querySelector("h1[data-qa-file^=SecurityHeader]")
+                    //console.log(security_block);
+                    if (security_block) {
+                        security_block.insertAdjacentHTML('afterend', html);
+                    }
                 }
             }
 
-
             if (real_revenue_object.history_count.length > 0) {
-                head_block = document.querySelector("div[data-qa-file=StockPure]")
+                head_block = document.querySelector("div[class^=SecurityHeaderPure__wrapper]")
                 count_block = document.querySelector(".tinvest-count_stocks")
-                stocks_count_html = '<table class="tinvest-count_stocks"><tr><th>Цена</th><th>Количество</th></tr>';
+                stocks_count_html = '<table class="tinvest-count_stocks"><tr><th></th><th>Цена</th><th>Количество</th></tr>';
+                avg = 0;
+                avg_tmp = 0;
+                avg_count = 0;
                 real_revenue_object.history_count.forEach(function (item) {
-                    stocks_count_html += "<tr><td>" + item[0] + "</td><td>" + item[1] + "</td></tr>"
+                    stocks_count_html += "<tr><td></td><td>" + item[0] + "</td><td>" + item[1] + "</td></tr>"
+                    if (isCurrency) {
+                        avg_tmp += item[0] * item[1];
+                        avg_count += item[1]
+                    }
                 })
+                if (isCurrency) {
+                    avg = Math.round(avg_tmp / avg_count * 100) / 100
+                    console.log(avg_tmp, avg_count)
+                    stocks_count_html += "<tr class='avg'><td>Средняя</td><td>" + avg + "</td><td>" + avg_count + "</td></tr>"
+                }
                 stocks_count_html += '</table>'
 
 
                 if (count_block) {
                     count_block.outerHTML = stocks_count_html
                 } else {
-                    head_block = document.querySelector("div[data-qa-file=StockPure]")
                     if (head_block) {
                         head_block.insertAdjacentHTML('afterend', stocks_count_html);
                     }
@@ -380,15 +393,17 @@ async function real_revenue() {
         }
     }
 
-    if (real_revenue_value < 0) {
-        document.body.classList.remove('good-revenue');
-        document.body.classList.add('bad-revenue');
-    } else if (real_revenue_value > 0) {
-        document.body.classList.add('good-revenue');
-        document.body.classList.remove('bad-revenue');
-    } else {
-        document.body.classList.remove('good-revenue');
-        document.body.classList.remove('bad-revenue');
+    if (!isCurrency) {
+        if (real_revenue_value < 0) {
+            document.body.classList.remove('good-revenue');
+            document.body.classList.add('bad-revenue');
+        } else if (real_revenue_value > 0) {
+            document.body.classList.add('good-revenue');
+            document.body.classList.remove('bad-revenue');
+        } else {
+            document.body.classList.remove('good-revenue');
+            document.body.classList.remove('bad-revenue');
+        }
     }
 }
 
@@ -621,9 +636,14 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru') {
     style_arr = [
         '.bad-revenue{background-color: rgba(255, 0, 0, 0.05);}',
         '.good-revenue{background-color: rgba(0, 255, 0, 0.05);}',
-        '.tinvest-count_stocks {margin-bottom:25px; width:100%;border-collapse: collapse;color:#333;text-align: center;}',
+        '.tinvest-count_stocks {margin:20px 0; width:100%;border-collapse: collapse;color:#333;text-align: center;}',
         '.tinvest-count_stocks th, .tinvest-count_stocks td {padding:5px 0;border-bottom: 1px solid #ddd;}',
-        'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}'
+        '.tinvest-count_stocks tr:nth-child(odd){background-color: #0192cf0d}',
+        '.tinvest-count_stocks tr.avg{border-top:2px solid black}',
+        'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}',
+        '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px}',
+        '[class^=Table__linkCell_]{padding: 11px}',
+        '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #0192cf0d}'
     ];
 
     style_arr.forEach(function (style) {
