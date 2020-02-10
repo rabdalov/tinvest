@@ -279,6 +279,7 @@ async function calc_real_revenue(payload, history_result, current_ticker) {
 }
 
 async function real_revenue() {
+
 // current_ticker=Object.keys(data.investTrade.symbolUserInfo)[0];
     regex = /\(([A-Z\.]+)\):/m
     ticker_regexp = regex.exec(document.querySelector("meta[property='og:title']").content)
@@ -291,6 +292,7 @@ async function real_revenue() {
         current_ticker = ticker_regexp[1];
         //console.log("Обнаружен Тикер: " + current_ticker);
         info = await getInfo(current_ticker);
+
         //console.log("Info: ");
         //currency='';
         if (info.payload.hasEvents) {
@@ -359,6 +361,7 @@ async function real_revenue() {
                     }
                 }
             }
+
 
             if (real_revenue_object.history_count.length > 0) {
                 head_block = document.querySelector("div[class^=SecurityHeaderPure__wrapper]")
@@ -626,38 +629,38 @@ async function exportJournalToCsv() {
 }
 
 
-if (window.location.host.replace('www.', '') == 'tinkoff.ru') {
+if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.pathname!='/invest-terminal/') {
     if(window.location.pathname=='/invest/web-terminal/'){
         window.location='/invest-terminal'
+    } else {
+        document.querySelectorAll("a[href='/invest/web-terminal/']").forEach(function (item) {
+            item.href = '/invest-terminal'
+        })
+        style_arr = [
+            '.bad-revenue{background-color: rgba(255, 0, 0, 0.05);}',
+            '.good-revenue{background-color: rgba(0, 255, 0, 0.05);}',
+            '.tinvest-count_stocks {margin:20px 0; width:100%;border-collapse: collapse;color:#333;text-align: center;}',
+            '.tinvest-count_stocks th, .tinvest-count_stocks td {padding:5px 0;border-bottom: 1px solid #ddd;}',
+            '.tinvest-count_stocks tr:nth-child(odd){background-color: #0192cf0d}',
+            '.tinvest-count_stocks tr.avg{border-top:2px solid black}',
+            'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}',
+            '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px}',
+            '[class^=Table__linkCell_]{padding: 11px}',
+            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #0192cf0d}'
+        ];
+
+        style_arr.forEach(function (style) {
+            document.body.insertAdjacentHTML("afterbegin", "<style>" + style + "</style>")
+        })
+        exportToCsv();
+        exportJournalToCsv();
+        real_revenue();
+        setInterval(async function () {
+            await real_revenue();
+            await exportToCsv();
+            await exportJournalToCsv();
+        }, 2500);
     }
-    document.querySelectorAll("a[href='/invest/web-terminal/']").forEach(function(item){
-        item.href='/invest-terminal'
-    })
-    style_arr = [
-        '.bad-revenue{background-color: rgba(255, 0, 0, 0.05);}',
-        '.good-revenue{background-color: rgba(0, 255, 0, 0.05);}',
-        '.tinvest-count_stocks {margin:20px 0; width:100%;border-collapse: collapse;color:#333;text-align: center;}',
-        '.tinvest-count_stocks th, .tinvest-count_stocks td {padding:5px 0;border-bottom: 1px solid #ddd;}',
-        '.tinvest-count_stocks tr:nth-child(odd){background-color: #0192cf0d}',
-        '.tinvest-count_stocks tr.avg{border-top:2px solid black}',
-        'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}',
-        '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px}',
-        '[class^=Table__linkCell_]{padding: 11px}',
-        '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #0192cf0d}'
-    ];
-
-    style_arr.forEach(function (style) {
-        document.body.insertAdjacentHTML("afterbegin", "<style>" + style + "</style>")
-    })
-    exportToCsv();
-    exportJournalToCsv();
-    real_revenue();
-    setInterval(async function () {
-        await real_revenue();
-        await exportToCsv();
-        await exportJournalToCsv();
-    }, 2500);
-
 } else {
     console.log('not tinkoff')
 }
