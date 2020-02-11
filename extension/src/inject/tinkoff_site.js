@@ -292,7 +292,8 @@ async function real_revenue() {
         current_ticker = ticker_regexp[1];
         //console.log("Обнаружен Тикер: " + current_ticker);
         info = await getInfo(current_ticker);
-
+        // console.log(info)
+        current_price=0
         //console.log("Info: ");
         //currency='';
         if (info.payload.hasEvents) {
@@ -301,6 +302,7 @@ async function real_revenue() {
             real_revenue_object = await calc_real_revenue(info.payload, null, current_ticker);
             real_revenue_value = real_revenue_object.revenue
             if (info.payload.positionTinkoff) {
+                current_price=info.payload.positionTinkoff.currentPrice.value
                 isCurrency = (info.payload.positionTinkoff.securityType == 'Currency')
                 currency = info.payload.positionTinkoff.currentAmount.currency.toString();
                 if (!currency) {
@@ -310,6 +312,7 @@ async function real_revenue() {
                 currentBalance = info.payload.positionTinkoff.currentBalance;
             }
             if (info.payload.positionTinkoffIis) {
+                current_price=info.payload.positionTinkoffIis.currentPrice.value
                 isCurrency = (info.payload.positionTinkoffIis.securityType == 'Currency')
                 //real_revenue_value += await calc_real_revenue(info.payload.positionTinkoffIis);
                 currency = info.payload.positionTinkoffIis.currentAmount.currency.toString();
@@ -366,12 +369,25 @@ async function real_revenue() {
             if (real_revenue_object.history_count.length > 0) {
                 head_block = document.querySelector("div[class^=SecurityHeaderPure__wrapper]")
                 count_block = document.querySelector(".tinvest-count_stocks")
-                stocks_count_html = '<table class="tinvest-count_stocks"><tr><th></th><th>Цена</th><th>Количество</th></tr>';
+                stocks_count_html = '<table class="tinvest-count_stocks"><tr>' +
+                    '<th></th>' +
+                    '<th>Цена</th>' +
+                    '<th>Количество</th>' +
+                    '<th>%</th>' +
+                    '</tr>';
                 avg = 0;
                 avg_tmp = 0;
                 avg_count = 0;
                 real_revenue_object.history_count.forEach(function (item) {
-                    stocks_count_html += "<tr><td></td><td>" + item[0] + "</td><td>" + item[1] + "</td></tr>"
+                    //какая-то хрень, не хочет округлять до 2х знаков
+                    percent= ((parseInt((current_price/item[0])*10000)/100)-100).toFixed(2);
+
+                    stocks_count_html += "<tr>" +
+                        "<td></td>" +
+                        "<td>" + item[0] + "</td>" +
+                        "<td>" + item[1] + "</td>" +
+                        "<td>" + percent + "</td>" +
+                        "</tr>"
                     if (isCurrency) {
                         avg_tmp += item[0] * item[1];
                         avg_count += item[1]
@@ -646,7 +662,7 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}',
             '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px}',
             '[class^=Table__linkCell_]{padding: 11px}',
-            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #0192cf0d}'
+            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: rgba(1, 146, 207, 0.075)}'
         ];
 
         style_arr.forEach(function (style) {
