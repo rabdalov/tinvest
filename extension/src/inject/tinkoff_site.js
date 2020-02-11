@@ -659,8 +659,8 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             '.tinvest-count_stocks th, .tinvest-count_stocks td {padding:5px 0;border-bottom: 1px solid #ddd;}',
             '.tinvest-count_stocks tr:nth-child(odd){background-color: #0192cf0d}',
             '.tinvest-count_stocks tr.avg{border-top:2px solid black}',
-            'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px}',
-            '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px}',
+            'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px !important}',
+            '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px !important}',
             '[class^=Table__linkCell_]{padding: 11px}',
             '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: rgba(1, 146, 207, 0.075)}'
         ];
