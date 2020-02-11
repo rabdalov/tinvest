@@ -1,6 +1,6 @@
 {
   "name": "Tinvest",
-  "version": "0.18.20.2",
+  "version": "0.18.20.3",
   "manifest_version": 2,
   "description": "",
   "homepage_url": "https://t.me/million_fonda",
@@ -13,12 +13,7 @@
   "page_action": {
     "default_icon": "icons/icon19.png"
   },
-  "background": {
-    "scripts": ["src/background.js"],
-    "persistent": true
-  },
   "permissions": [
-    "tabs",
     "https://*.earningswhispers.com/*",
     "https://*.simplywall.st/*",
     "https://*.tinkoff.ru/invest-terminal/*",
