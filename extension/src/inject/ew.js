@@ -23,15 +23,15 @@ function etTimeToMsc(time) {
 }
 
 function updateTime() {
-        document.querySelectorAll("div.time:not(.updated), div#earningstime:not(.updated)").forEach(function (element, index) {
-            element.classList.add('updated')
-            element.textContent = element.textContent + " (" + etTimeToMsc(element.textContent) + ")"
-        })
+    document.querySelectorAll("div.time:not(.updated), div#earningstime:not(.updated)").forEach(function (element, index) {
+        element.classList.add('updated')
+        element.textContent = element.textContent + " (" + etTimeToMsc(element.textContent) + ")"
+    })
 }
 
 function getGraphUrl(ticker) {
     // return "https://finviz.com/chart.ashx?t=" + ticker + "&ty=c&ta=1&p=d&s=l";
-    return "http://tinvest.daager.ru/stockcharts/"+ticker;
+    return "http://tinvest.daager.ru/stockcharts/" + ticker;
 }
 
 function markTinTicker() {
@@ -70,11 +70,14 @@ if (window.location.host.replace('www.', '') == 'earningswhispers.com') {
         document.body.insertAdjacentHTML("afterbegin", "<style>" + style + "</style>")
     })
 
-    $hidden = '<div id="hide-show_non_tinkoff"><label><input type="checkbox"' + (hidden ? 'CHECKED' : '') + '>Скрыть тикеры недоступные в Тинькофф</label></div>';
-    document.getElementById('calheading').insertAdjacentHTML('afterend', $hidden);
 
-    document.querySelector('#hide-show_non_tinkoff input').onchange = function () {
-        hideShowNonTinkoff()
+    if (document.getElementById('calheading')) {
+        $hidden = '<div id="hide-show_non_tinkoff"><label><input type="checkbox"' + (hidden ? 'CHECKED' : '') + '>Скрыть тикеры недоступные в Тинькофф</label></div>';
+        document.getElementById('calheading').insertAdjacentHTML('afterend', $hidden);
+
+        document.querySelector('#hide-show_non_tinkoff input').onchange = function () {
+            hideShowNonTinkoff()
+        }
     }
 
     updateTime();
@@ -94,7 +97,7 @@ if (window.location.host.replace('www.', '') == 'earningswhispers.com') {
             url = getGraphUrl(el.textContent)
             img_block.src = url
             graph_block.style.display = 'block'
-            graph_block.style.top = (e.clientY -50) + "px"
+            graph_block.style.top = (e.clientY - 50) + "px"
             graph_block.style.left = (e.clientX + 50) + "px"
         }
     };
