@@ -644,6 +644,16 @@ async function exportJournalToCsv() {
 
 }
 
+function markPotrfolioRevenue(){
+    document.querySelectorAll('[class^=PortfolioTablePure__tableWrapper_] td:last-child div[class^=Table__linkCell_]').forEach(function(elem){
+        var icon=elem.querySelector("div[class^=Icon__icon_]")
+        if(icon){
+            color=icon.style.color.replace(')',',0.25)')
+            style='linear-gradient(to right, rgba(255,255,255,0) 0%, '+color+' 100%)'
+            elem.style.background=style
+        }
+    })
+}
 
 if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.pathname!='/invest-terminal/') {
     if(window.location.pathname=='/invest/web-terminal/'){
@@ -662,7 +672,7 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px !important}',
             '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px !important}',
             '[class^=Table__linkCell_]{padding: 11px}',
-            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: rgba(1, 146, 207, 0.075)}'
+            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #c1c1c133}'
         ];
 
         style_arr.forEach(function (style) {
@@ -671,10 +681,12 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
         exportToCsv();
         exportJournalToCsv();
         real_revenue();
+        markPotrfolioRevenue();
         setInterval(async function () {
             await real_revenue();
             await exportToCsv();
             await exportJournalToCsv();
+            markPotrfolioRevenue();
         }, 2500);
     }
 } else {
