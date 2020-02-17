@@ -644,6 +644,146 @@ async function exportJournalToCsv() {
 
 }
 
+async function getPortfolioAdvice(){
+    let s_id = getCookie('psid');
+    let data={brokerAccountType:"All"};
+    let response = await fetch('https://api.tinkoff.ru/trading/portfolio_analytics/advice?tinvest&sessionId=' + s_id, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(data)
+    });
+
+    return await response.json();
+}
+
+async function getPortfolioYield(){
+    let s_id = getCookie('psid');
+    let data={period:"All",brokerAccountType:"All",currency:"USD"};
+    let response = await fetch(' https://api.tinkoff.ru/trading/portfolio_analytics/yield?tinvest&sessionId=' + s_id, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(data)
+    });
+
+    return await response.json();
+}
+
+async function searchCompanyInTinkoff(string, end=5){
+    let s_id = getCookie('psid');
+    let data={filter:string,country:"All",sortType:"ByName",orderType:"Asc",start:0,end:end};
+    let response = await fetch(' https://api.tinkoff.ru/trading/stocks/list?tinvest&sessionId=' + s_id, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(data)
+    });
+
+    result= await response.json();
+}
+
+async function searchCompanyInPV(string){
+    let response = await fetch(' https://tinvest.daager.ru/portfoliovisualizer/search/' + string, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+    });
+
+
+    result=await response.text()
+
+   if(result){
+       return JSON.parse(result)
+   } else {
+       return {};
+   }
+}
+
+
+var backtest=false;
+async function backtestLink(){
+    if(backtest){
+        return;
+    }
+    chart=document.querySelector("div[class^=PortfolioChartPure__container_]");
+    if(chart){
+        portfolio_yield=await getPortfolioYield()
+        portfolio_advice=await getPortfolioAdvice()
+        portfolio_yield=portfolio_yield.payload.yieldAbsoluteData
+        portfolio_advice=portfolio_advice.payload.portfolio.issuers
+        first=portfolio_yield[0]
+        last=portfolio_yield[portfolio_yield.length-1]
+
+        first_date=new Date(parseInt(first.date+'000'))
+        last_date=new Date(parseInt(last.date+'000'))
+
+
+        backtest_main_url="https://www.portfoliovisualizer.com/backtest-portfolio";
+        const data = {
+            s: 'y',
+            timePeriod: 2,
+            startYear: first_date.getFullYear(),
+            firstMonth: first_date.getMonth()+1,
+            endYear: last_date.getFullYear(),
+            lastMonth: last_date.getMonth()+1,
+            calendarAligned: true,
+            initialAmount: parseInt(first.value),
+            annualOperation: 1,
+            annualAdjustment: parseInt(last.value/(portfolio_yield.length-1)),
+            inflationAdjusted: true,
+            annualPercentage: 30.0,
+            frequency: 2,
+            rebalanceType: 0,
+            absoluteDeviation: 5.0,
+            relativeDeviation: 25.0,
+            showYield: false,
+            reinvestDividends: true,
+            benchmark: -1,
+            benchmarkSymbol: 'SPY',
+        };
+
+
+        tickers=[]
+        percent=0
+        for(var key in portfolio_advice){
+            item=portfolio_advice[key]
+            result=await searchCompanyInPV(item.type)
+            if(result.length){
+                result=result[0]
+                result.percent=item.valueRelative
+                percent+=result.percent
+                tickers.push(result)
+            }
+        }
+
+        ffix=100;
+        if(percent<100){
+            fix_percent=100/percent;
+            for(var item in tickers) {
+                tickers[item].percent=parseInt(tickers[item].percent*fix_percent*100)/100
+                key=parseInt(item)+1
+                data['symbol'+key]=tickers[item].id
+                data['allocation'+key+'_1']=tickers[item].percent
+                ffix-=tickers[item].percent
+            }
+            data['allocation'+1+'_1']+=ffix
+
+
+        }
+        const searchParams = new URLSearchParams(data);
+        backtext_url=backtest_main_url+'?'+searchParams.toString()
+        chart.insertAdjacentHTML("beforeend",'<a target="_blank" href='+backtext_url+'>Backtest</a>')
+
+    }
+    backtest=true
+}
+
+
 function markPotrfolioRevenue(){
     document.querySelectorAll('[class^=PortfolioTablePure__tableWrapper_] td:last-child div[class^=Table__linkCell_]').forEach(function(elem){
         var icon=elem.querySelector("div[class^=Icon__icon_]")
@@ -687,6 +827,7 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             await exportToCsv();
             await exportJournalToCsv();
             markPotrfolioRevenue();
+            backtestLink();
         }, 2500);
     }
 } else {
