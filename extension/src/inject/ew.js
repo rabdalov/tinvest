@@ -31,7 +31,7 @@ function updateTime() {
 
 function getGraphUrl(ticker) {
     // return "https://finviz.com/chart.ashx?t=" + ticker + "&ty=c&ta=1&p=d&s=l";
-    return "http://tinvest.daager.ru/stockcharts/" + ticker;
+    return "https://tinvest.daager.ru/stockcharts/" + ticker;
 }
 
 function markTinTicker() {
