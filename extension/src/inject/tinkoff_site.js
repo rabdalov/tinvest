@@ -672,7 +672,8 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             'h1[class^=SecurityHeaderPure__title_]{margin-bottom:0px !important}',
             '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px !important}',
             '[class^=Table__linkCell_]{padding: 11px}',
-            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #c1c1c133}'
+            '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #c1c1c133}',
+            '[class^=PortfolioPure__top_], [class^=PortfolioPure__block_]{margin-top:12px !important}'
         ];
 
         style_arr.forEach(function (style) {
