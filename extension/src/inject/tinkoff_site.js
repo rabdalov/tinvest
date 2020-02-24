@@ -149,6 +149,54 @@ async function getPrices(ticker) {
     return await response.json();
 }
 
+
+async function get_status() {
+    let s_id = getCookie('psid')
+    let response = await fetch(' https://api.tinkoff.ru/trading/user/info?sessionId=' + s_id, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        }
+    });
+
+    return await response.json();
+}
+
+
+async function getBondInfo(ticker) {
+    let data = {
+        "ticker": ticker,
+    };
+
+    let s_id = getCookie('psid')
+    let response = await fetch(' https://api.tinkoff.ru/trading/bonds/get?tinvest&sessionId=' + s_id, {
+								//https://api.tinkoff.ru/trading/bonds/get?sessionId=0y5B0zkAGrQqF5MYL66NiAvQZ5GDpJk3.ds-prod-api42
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(data)
+    });
+    //console.log(response);
+    return await response.json();
+}
+async function getDevidends(ticker) {
+    let data = {
+        "ticker": ticker,
+    };
+
+    let s_id = getCookie('psid')
+    let response = await fetch(' https://api.tinkoff.ru/trading/stocks/dividends?tinvest&sessionId=' + s_id, {
+								//https://api.tinkoff.ru/trading/stocks/dividends?sessionId=0y5B0zkAGrQqF5MYL66NiAvQZ5GDpJk3.ds-prod-api42
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(data)
+    });
+    //console.log(response);
+    return await response.json();
+}
 async function needEarn(revenue, payload, current_ticker) {
     //console.log(payload);
     if (!payload) {
@@ -427,6 +475,13 @@ async function real_revenue() {
 }
 
 async function exportToCsv() {
+    var tagtofind = 'a[href="/invest/broker_account/events/"]';
+    Found_Page_Selector = document.querySelector(tagtofind);
+	//console.log(Found_Page_Selector);
+    if (Found_Page_Selector===null)  {
+        //console.log("Not Portfolio page. Stopped");
+		return false
+    }	
     let accounts = await getBrokerAccounts();
     //console.log("Accounts");
     accounts = accounts.payload.accounts;
@@ -644,6 +699,269 @@ async function exportJournalToCsv() {
 
 }
 
+async function UpdateTickerExtraInfo(){
+    //console.log('');console.log('');
+    //console.log('Starting UpdateTickerExtraInfo...');
+    var tagtofind = 'a[href="/invest/broker_account/events/"]';
+    Found_Page_Selector = document.querySelector(tagtofind);
+	//console.log(Found_Page_Selector);
+    if (Found_Page_Selector===null)  {
+        console.log("Not Portfolio page. Stopped");
+		return false
+    } //else {
+      //  console.log("Found Portfolio page!");
+	//}	
+	if (document.querySelector('.tinvest-data-Started')!==null) {
+        //console.log("Still updating previous. Skipped try");
+		return false
+	} else {
+		//console.log("No previous run. Executing...");
+		Found_Page_Selector.classList.add('tinvest-data-Started');
+	}
+	
+    let accounts = await getBrokerAccounts();
+    accounts = accounts.payload.accounts;
+    accounts_num = accounts.length;
+	var today = new Date();
+	var pTablesElementsList;
+	var HeaderElement;
+	var TablesElement;
+	var RowsAll;
+	var RowsAllArray;
+	var FoundRowAllElement;
+	var TablesElements;
+	var TablesElementsList;
+	TablesElements = document.getElementsByTagName('table');
+	//console.log('Tables Count: '+ TablesElements.length);
+	TablesElementsList = Array.prototype.slice.call(TablesElements);
+	//console.log(TablesElementsList);
+    for (const Account of accounts) {
+        accountname = Account.brokerAccountType;
+        //console.log('Starting with Account: '+accountname);
+
+		//Нашли блок с портфелем для каждого счета
+		//console.log(TablesElementsList);
+		var i;
+		var ip;
+		ip=-1;
+		FoundRowAllElement=0;
+		TablesElement=null;
+		//var TargetRow=null;
+		//Для каждого блока портфельного счета ищем заголовок с кнопкой "Пополнить"
+		for (r = 0; (r < TablesElementsList.length) && (FoundRowAllElement==0); r++) {
+		  pTablesElementsList=TablesElementsList[r].parentNode.parentNode.parentNode.parentNode;
+		  tagtofind = `a[href="/invest/broker_account/actions/replenishment/?brokerAccountType=`+accountname+`"]`;
+		  HeaderElement=pTablesElementsList.querySelector(tagtofind);
+		  if (HeaderElement!==null){ 
+			ip=r;
+			TablesElement=TablesElements[r];
+			RowsAll = TablesElement.rows;
+			FoundRowAllElement=1;	
+			//console.log('HeaderElement:');
+			//console.log(HeaderElement);
+		  }
+		}
+		if (FoundRowAllElement==1) { //Дальше идем только если нашли блок с кнопкой "Пополнить"
+			RowsAllArray=Array.prototype.slice.call(RowsAll);
+			tickers = (await getPurchasedSecurities(accountname)).payload; //загружаем портфель для счета
+			//console.log(tickers);	
+			tickers_num = tickers.data.length;
+			//console.save(tickers.data,accountname+"_info");
+			var j;
+			//Проходим по каждому ряду таблицы Портфеля и сопоставляем с данными из API, т.к. порядок разный
+			for (j = 0; (j < RowsAllArray.length) ; j++) {//&& (Found_ticker_in_table==0)
+			//for (i = 0; i < tickers_num; i++) {
+				Found_ticker_in_table=0;
+				//TargetRow = RowsAllArray[j];//.querySelector("."+classname);
+				//console.log(RowsAllArray[j]);
+				tagtofind = `a[href^="/invest/"]`;
+				//console.log('Searching: '+tagtofind);
+				var Ticker_col = RowsAllArray[j].querySelector(tagtofind);
+				if (Ticker_col!==null) {
+					Link_addr=Ticker_col.href;
+					//console.log(Link_addr);
+					Row_Ticker=Link_addr.split('/')[5];
+					Row_Ticker_type=Link_addr.split('/')[4];
+					//console.log('Matching ticker: '+Row_Ticker);
+					classname = "tinvest-data-row-"+accountname+"-"+Row_Ticker;
+					RowsAllArray[j].classList.add(classname);
+				} else {
+					if (j==RowsAllArray.length-1){
+						Row_Ticker='RUB';
+					}/* else {
+						console.log("tagtofind not found");
+						//return
+					}*/
+				};
+				var item;
+				var Ticker_matched=false;
+				
+				for (i = 0; (i < tickers_num) && (!Ticker_matched); i++) {
+					//console.log('i= '+i.toString()+' -> '+ tickers.data[i].ticker);
+					if (tickers.data[i].ticker==Row_Ticker) {
+						Ticker_matched=true;
+						item = tickers.data[i];
+						//console.log(item);	
+						tickercurency="";
+						if (item.securityType=='Currency') {item.securityType='Currencie'};
+						if (item.currentPrice.currency=="USD") {
+							tickercurency="$";
+						} else if (item.currentPrice.currency=="EUR") {
+							tickercurency="€";
+						} else if (item.currentPrice.currency=="RUB") {
+							tickercurency="₽";
+						};
+						//https://www.tinkoff.ru/invest/currencies/USDRUB/
+						classname = "tinvest-data-row-"+accountname+"-"+item.ticker;
+					}
+				}
+				//if (TargetRow!==null){	
+				if (Ticker_matched){	//|| (Row_Ticker='RUB')
+					//console.log(tagtofind);
+					classname = "tinvest-data-ticker-"+item.ticker;
+					Found_Class = RowsAllArray[j].querySelector("."+classname);
+					if (Found_Class===null) {//не нашли заполненное ранее поле с Тикером
+						tagtofind = 'td:nth-child(1)';
+						var currentCaption_col = RowsAllArray[j].querySelector(tagtofind);//
+						//console.log('currentCaption_col found :');
+						//console.log(currentCaption_col);
+						if (currentCaption_col!==null) {	
+							//console.log('Matching...');
+						
+							var xpath = `//div[text()='`+item.ticker+`']`;
+							var matchingElement = document.evaluate(xpath, currentCaption_col, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+							//console.log('matchingElement found: ');
+							//console.log(matchingElement);
+							if (matchingElement!==null) {
+								//console.log(matchingElement);
+								matchingElement.classList.add(classname);
+								//console.log('Загрузка и Расчет дивидендов');
+								var last_div_date_val="";
+								var last_div_value_val=0;
+								var div_date_class="blackfont";
+								var div_type="";
+								var div_string="";
+								if (item.securityType=='Stock'){//Загружаем Дивы
+									let all_dividends= (await getDevidends(item.ticker)).payload.dividends;
+									if (all_dividends!==null){
+										last_div_id=all_dividends.length;
+										if (last_div_id!=0) {
+											div_type="Д";
+											let divs_array=Array.prototype.slice.call(all_dividends);
+											//console.log(divs_array[last_div_id-1]);
+											var div_Date = new Date(divs_array[last_div_id-1].lastBuyDate);
+											if (div_Date<=today){
+												last_div_date_val=divs_array[last_div_id-1].lastBuyDate;
+												//console.log("Last Divs");
+											} else {
+												last_div_date_val=(divs_array[last_div_id-1].lastBuyDate);
+												div_date_class="greenfont";
+												//console.log("New Divs");
+											};
+											last_div_value_val=divs_array[last_div_id-1].dividend.value;
+											last_div_yield_val=100.0*last_div_value_val/item.currentPrice.value;
+										}/* else {
+										console.log("dividends array empty: ");	
+										}*/
+									}/* else {
+										console.log("Dividends is Empty");	
+										
+									}*/
+								} else if (item.securityType=='Bond'){//Загружаем купоны
+									let bond_info= (await getBondInfo(item.ticker)).payload;
+									//console.log(bond_info);	
+									div_type="K";
+									last_div_date_val=(new Date(bond_info.endDate)).toISOString().slice(0,10);
+									last_div_value_val= bond_info.couponValue;
+									last_div_yield_val=100.0*last_div_value_val/bond_info.price.value;
+									div_date_class="greenfont";
+									} else {last_div_value_val=0};
+								
+								if (last_div_value_val>0){
+									div_string=`[`+div_type+`:`+last_div_date_val+` /`+last_div_value_val.toFixed(2)+``+tickercurency+` /`+last_div_yield_val.toFixed(1)+`% => `+(last_div_value_val*item.currentBalance).toFixed(1)/*item.*/+``+tickercurency;
+									//console.log("div_string: "+div_string);	
+									matchingElement.innerHTML=`<span>`+matchingElement.textContent
+									+`  </span><span class='`+div_date_class+`'>`+div_string+`]</span>`;
+								}
+								
+							} else {
+								//console.log(currentCaption_col);
+								console.error("Error. Ticker Selector not found !!!!");
+								return false
+							}
+						} else {//|| document.querySelector(classname)
+								//console.log(TargetRow);
+								console.error("Error. Exiting cause selector not found !!!!");
+								return false
+						} 
+					}/* else {
+						console.log('Ticker exists: '+ classname);
+					}*/
+					tagtofind = 'td:nth-child(3)';//'table tbody tr td a[href="/invest/stocks/'+item.ticker+'/"]';
+					//console.log(tagtofind);
+					var currentBalance_col = RowsAllArray[j].querySelector(tagtofind);//
+					if (currentBalance_col!==null) {
+							classname = "tinvest-data-avgprice-"+accountname+"-"+item.ticker;
+							//console.log('Checking for class: '+ classname);
+							
+							Found_Class = RowsAllArray[j].querySelector("."+classname);
+							if (Found_Class===null) {
+								/*if (j==1) {
+									console.log('accountname: ');
+								    console.log(accountname);
+									
+									console.log('TablesElement: ');
+								    console.log(TablesElement);
+									
+									
+									console.log('RowsAllArray[j]: ');
+								    console.log(RowsAllArray[j]);
+									
+									console.log('Source cell to copy: ');
+								    console.log(currentBalance_col);
+									
+									console.log(!RowsAllArray[j].classList);
+									console.log('classname: '+classname);
+									console.log('Класс присутствует, но не найден');	
+									console.log(Found_Class);	
+								}	*/						
+							}
+
+							if (Found_Class===null){						
+								//console.log('Class not found. Creating column...');	
+								avg_price_col = currentBalance_col.cloneNode(true);
+								avg_price_col.classList.add(classname);
+								//console.log('Copied Column');
+								//console.log(item.ticker);
+								if (item.averagePositionPrice.value<=item.currentPrice.value){price_date_class="greenfont"} else {price_date_class="redfont"};
+								avg_price_col.querySelector('td a span div div div').innerHTML="<span class='blackfont'>"+item.averagePositionPrice.value+` `+tickercurency+" -></span><BR><span class='"+price_date_class+"'>"+item.currentPrice.value+` `+tickercurency+"</span>";
+								//avg_price_col.querySelector('span span').textContent = buttoncaption;
+								currentBalance_col.insertAdjacentHTML('beforebegin', avg_price_col.outerHTML);
+								//console.log('Inserted Column');
+							} else {
+								//console.log('Class found. Updating data...');	
+								if (item.averagePositionPrice.value<=item.currentPrice.value){price_date_class="greenfont"} else {price_date_class="redfont"};
+								Found_Class.querySelector('td a span div div div').innerHTML="<span class='blackfont'>"+item.averagePositionPrice.value+` `+tickercurency+"-></span><BR><span class='"+price_date_class+"'>"+item.currentPrice.value+` `+tickercurency+"</span>";							//console.log('Updated Column');
+							}
+
+						} else {//|| document.querySelector(classname)
+						    //console.log(RowsAllArray[j]);
+							//console.error("Error. Exiting cause selector not found !!!!");
+							return false
+						} 
+						
+				}/* else {
+					console.log('Found_Class_in_Row=false');
+					
+				}*/
+			} 
+//			console.log(RowsAllArray);
+		}	
+	}
+	Found_Page_Selector.classList.remove('tinvest-data-Started');
+	
+}
+
 function markPotrfolioRevenue(){
     document.querySelectorAll('[class^=PortfolioTablePure__tableWrapper_] td:last-child div[class^=Table__linkCell_]').forEach(function(elem){
         var icon=elem.querySelector("div[class^=Icon__icon_]")
@@ -673,7 +991,10 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             '[class^=PortfolioTablePure__logoContainer_]{margin-top:0px !important}',
             '[class^=Table__linkCell_]{padding: 11px}',
             '[class^=PortfolioTablePure__tableWrapper_] tr:nth-child(odd){background-color: #c1c1c133}',
-            '[class^=PortfolioPure__top_], [class^=PortfolioPure__block_]{margin-top:12px !important}'
+            '[class^=PortfolioPure__top_], [class^=PortfolioPure__block_]{margin-top:12px !important}',
+			'.greenfont {font-size:80%; color:rgba(0, 190, 0, 0.9)}',
+			'.redfont   {font-size:80%; color:rgba(190, 0, 0, 0.9)}',
+			'.blackfont {font-size:80%; color:black}'
         ];
 
         style_arr.forEach(function (style) {
@@ -688,6 +1009,7 @@ if (window.location.host.replace('www.', '') == 'tinkoff.ru' && window.location.
             await exportToCsv();
             await exportJournalToCsv();
             markPotrfolioRevenue();
+			await UpdateTickerExtraInfo();
         }, 2500);
     }
 } else {
